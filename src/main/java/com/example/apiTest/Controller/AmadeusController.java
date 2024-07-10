@@ -1,16 +1,10 @@
 package com.example.apiTest.Controller;
 
 import com.example.apiTest.Service.AmadeusService;
-import com.example.apiTest.Service.AuthenticationService;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api")
@@ -19,13 +13,16 @@ public class AmadeusController {
     @Autowired
     private AmadeusService amadeusService;
 
-    @GetMapping("/data/{Keyword}")
+    @GetMapping("/data/{subType}/{keyword}")
     public ResponseEntity<String> getData(
-            @PathVariable String Keyword) {
-        String endpoint = String.format("/v1/reference-data/locations?subType=AIRPORT&keyword=%s", Keyword);
+            @PathVariable("subType") String subType,
+            @PathVariable("keyword") String keyword) {
+
+        String endpoint = String.format("/v1/reference-data/locations?subType=%s&keyword=%s", subType, keyword.toUpperCase());
         String data = amadeusService.getAmadeusData(endpoint);
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
+
 
     @GetMapping("/flight-status")
     public ResponseEntity<String> getFlightStatus(
@@ -34,6 +31,25 @@ public class AmadeusController {
             @RequestParam String scheduledDepartureDate) {
         String data = amadeusService.getFlightStatus(carrierCode, flightNumber, scheduledDepartureDate);
         return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    @GetMapping("/flight-availability")
+    public ResponseEntity<String> getFlightAvailability(
+            @RequestParam String originLocationCode,
+            @RequestParam String destinationLocationCode,
+            @RequestParam String departureDate,
+            @RequestParam String travelerType,
+            @RequestParam(required = false) String departureTime,
+            @RequestParam(defaultValue = "GDS") String sources) {
+
+        String requestBody = String.format(
+                "{ \"originDestinations\": [ { \"id\": \"1\", \"originLocationCode\": \"%s\", \"destinationLocationCode\": \"%s\", \"departureDateTime\": { \"date\": \"%s\"%s } } ], \"travelers\": [ { \"id\": \"1\", \"travelerType\": \"%s\" } ], \"sources\": [ \"%s\" ] }",
+                originLocationCode, destinationLocationCode, departureDate,
+                (departureTime != null ? ", \"time\": \"" + departureTime + "\"" : ""),
+                travelerType, sources);
+
+        String data = amadeusService.getFlightAvailability(requestBody);
+        return ResponseEntity.ok(data);
     }
 }
 

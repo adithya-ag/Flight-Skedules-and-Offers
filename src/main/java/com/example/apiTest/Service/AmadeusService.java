@@ -4,11 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
+
 
 @Service
 public class AmadeusService {
@@ -91,6 +89,27 @@ public class AmadeusService {
         ResponseEntity<String> response = restTemplate.exchange(
                 apiUrl + endpoint,
                 HttpMethod.GET,
+                entity,
+                String.class
+        );
+
+        return response.getBody();
+    }
+
+
+
+    public String getFlightAvailability(String requestBody) {
+        String accessToken = authService.getAccessToken();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.amadeus+json"));
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                apiUrl + "/v1/shopping/availability/flight-availabilities",
+                HttpMethod.POST,
                 entity,
                 String.class
         );
