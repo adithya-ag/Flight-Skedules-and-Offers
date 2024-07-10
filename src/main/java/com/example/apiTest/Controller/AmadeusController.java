@@ -13,6 +13,11 @@ public class AmadeusController {
     @Autowired
     private AmadeusService amadeusService;
 
+    @GetMapping("/")
+    public ResponseEntity<String> getRoot() {
+        return new ResponseEntity<>("Welcome to the Amadeus API Service By Adithya G.A!!", HttpStatus.OK);
+    }
+
     @GetMapping("/data/{subType}/{keyword}")
     public ResponseEntity<String> getData(
             @PathVariable("subType") String subType,
