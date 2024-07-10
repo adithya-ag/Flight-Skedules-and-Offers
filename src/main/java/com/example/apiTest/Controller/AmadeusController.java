@@ -15,7 +15,7 @@ public class AmadeusController {
 
     @GetMapping("/")
     public ResponseEntity<String> getRoot() {
-        return new ResponseEntity<>("Welcome to the Amadeus API Service By Adithya G.A!!", HttpStatus.OK);
+        return new ResponseEntity<>("Welcome to the Amadeus API MicroService By Adithya G.A!!", HttpStatus.OK);
     }
 
     @GetMapping("/data/{subType}/{keyword}")
