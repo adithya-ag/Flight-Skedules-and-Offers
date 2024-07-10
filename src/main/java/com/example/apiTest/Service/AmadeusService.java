@@ -1,11 +1,15 @@
 package com.example.apiTest.Service;
 
+import com.example.apiTest.Excepetions.AmadeusApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -39,14 +43,22 @@ public class AmadeusService {
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                endpoint,
-                HttpMethod.GET,
-                entity,
-                String.class
-        );
-
-        return response.getBody();
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(endpoint, HttpMethod.GET, entity, String.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            // Parse the error response body
+            Map<String, Object> errorResponse = restTemplate.getForObject(endpoint, Map.class);
+            if (errorResponse != null && errorResponse.containsKey("errors")) {
+                Map<String, Object> error = ((List<Map<String, Object>>) errorResponse.get("errors")).get(0);
+                int statusCode = e.getStatusCode().value();
+                int errorCode = (int) error.get("code");
+                String errorTitle = (String) error.get("title");
+                String errorDetail = (String) error.get("detail");
+                throw new AmadeusApiException(statusCode, errorCode, errorTitle, errorDetail);
+            }
+            throw e; // Re-throw the original exception if parsing fails
+        }
     }
 
 
@@ -86,35 +98,56 @@ public class AmadeusService {
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                apiUrl + endpoint,
-                HttpMethod.GET,
-                entity,
-                String.class
-        );
-
-        return response.getBody();
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(apiUrl + endpoint, HttpMethod.GET, entity, String.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            // Parse the error response body
+            Map<String, Object> errorResponse = restTemplate.getForObject(endpoint, Map.class);
+            if (errorResponse != null && errorResponse.containsKey("errors")) {
+                Map<String, Object> error = ((List<Map<String, Object>>) errorResponse.get("errors")).get(0);
+                int statusCode = e.getStatusCode().value();
+                int errorCode = (int) error.get("code");
+                String errorTitle = (String) error.get("title");
+                String errorDetail = (String) error.get("detail");
+                throw new AmadeusApiException(statusCode, errorCode, errorTitle, errorDetail);
+            }
+            throw e; // Re-throw the original exception if parsing fails
+        }
     }
 
 
 
-    public String getFlightAvailability(String requestBody) {
+    public String getFlightAvailability(String originLocationCode, String destinationLocationCode, String departureDate, String departureTime) {
         String accessToken = authService.getAccessToken();
-
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("application/vnd.amadeus+json"));
+        System.out.printf("Header: ", headers);
         headers.set("Authorization", "Bearer " + accessToken);
+        headers.set("Content-Type", "application/vnd.amadeus+json");
+
+        String endpoint = apiUrl + "/v1/shopping/availability/flight-availabilities";
+
+        String requestBody = String.format("{ \"originDestinations\": [{ \"id\": \"1\", \"originLocationCode\": \"%s\", \"destinationLocationCode\": \"%s\", \"departureDateTime\": { \"date\": \"%s\", \"time\": \"%s\" } }], \"travelers\": [{ \"id\": \"1\", \"travelerType\": \"ADULT\" }], \"sources\": [\"GDS\"] }",
+                originLocationCode, destinationLocationCode, departureDate, departureTime);
 
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                apiUrl + "/v1/shopping/availability/flight-availabilities",
-                HttpMethod.POST,
-                entity,
-                String.class
-        );
-
-        return response.getBody();
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(endpoint, HttpMethod.POST, entity, String.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            // Parse the error response body
+            Map<String, Object> errorResponse = restTemplate.getForObject(endpoint, Map.class);
+            if (errorResponse != null && errorResponse.containsKey("errors")) {
+                Map<String, Object> error = ((List<Map<String, Object>>) errorResponse.get("errors")).get(0);
+                int statusCode = e.getStatusCode().value();
+                int errorCode = (int) error.get("code");
+                String errorTitle = (String) error.get("title");
+                String errorDetail = (String) error.get("detail");
+                throw new AmadeusApiException(statusCode, errorCode, errorTitle, errorDetail);
+            }
+            throw e; // Re-throw the original exception if parsing fails
+        }
     }
 }
 

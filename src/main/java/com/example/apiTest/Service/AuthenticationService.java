@@ -30,6 +30,7 @@ public class AuthenticationService {
     }
 
     public String getAccessToken() {
+        System.out.printf("Access Token: %s%n", accessToken);
         if (accessToken == null || System.currentTimeMillis() > expiryTime) {
             refreshAccessToken();
         }
@@ -37,6 +38,7 @@ public class AuthenticationService {
     }
 
     private void refreshAccessToken() {
+        System.out.printf("Refreshing Access Token...%n");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);

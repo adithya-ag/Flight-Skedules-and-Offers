@@ -17,7 +17,7 @@ public class AmadeusController {
     public ResponseEntity<String> getData(
             @PathVariable("subType") String subType,
             @PathVariable("keyword") String keyword) {
-
+        System.out.printf("SubType: %s, Keyword: %s%n", subType, keyword);
         String endpoint = String.format("/v1/reference-data/locations?subType=%s&keyword=%s", subType, keyword.toUpperCase());
         String data = amadeusService.getAmadeusData(endpoint);
         return new ResponseEntity<>(data, HttpStatus.OK);
@@ -38,18 +38,10 @@ public class AmadeusController {
             @RequestParam String originLocationCode,
             @RequestParam String destinationLocationCode,
             @RequestParam String departureDate,
-            @RequestParam String travelerType,
-            @RequestParam(required = false) String departureTime,
-            @RequestParam(defaultValue = "GDS") String sources) {
-
-        String requestBody = String.format(
-                "{ \"originDestinations\": [ { \"id\": \"1\", \"originLocationCode\": \"%s\", \"destinationLocationCode\": \"%s\", \"departureDateTime\": { \"date\": \"%s\"%s } } ], \"travelers\": [ { \"id\": \"1\", \"travelerType\": \"%s\" } ], \"sources\": [ \"%s\" ] }",
-                originLocationCode, destinationLocationCode, departureDate,
-                (departureTime != null ? ", \"time\": \"" + departureTime + "\"" : ""),
-                travelerType, sources);
-
-        String data = amadeusService.getFlightAvailability(requestBody);
-        return ResponseEntity.ok(data);
+            @RequestParam String departureTime) {
+        System.out.printf("entered flight availability controller%n");
+        String data = amadeusService.getFlightAvailability(originLocationCode, destinationLocationCode, departureDate, departureTime);
+        return new ResponseEntity<>(data, HttpStatus.OK);
     }
 }
 
